@@ -1,0 +1,13 @@
+# Line endings, pinned. The two .sh tools run under bash inside WSL, and a CRLF there
+# turns `set -uo pipefail\r` into an unrecognised option - a normal `git clone` on
+# Windows must not be able to break them.
+* text=auto eol=lf
+*.sh text eol=lf
+*.py text eol=lf
+*.md text eol=lf
+*.png binary
+*.jpg binary
+*.npz binary
+*.pkl binary
+*.zip binary
+*.json text eol=lf

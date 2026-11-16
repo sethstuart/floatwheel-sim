@@ -1,0 +1,118 @@
+<!-- Reference geometry for a Floatwheel ADV2-class board: wheel THROUGH the deck, rails either side,
+     footpads fore and aft. Same kinematic tree as floatwheel-sim/sim/model.py (deck freejoint with its
+     origin on the axle, wheel hinge child), so a qpos recorded there replays here.
+     Dimensions are Onewheel-GT-class approximations, NOT measured ADV2 numbers. x fwd, y left, z up. -->
+<mujoco model="floatwheel-adv2-reference">
+  <compiler angle="degree" inertiafromgeom="true"/>
+  <option timestep="0.001" integrator="RK4"/>
+  <visual>
+    <global offwidth="1600" offheight="900" azimuth="120" elevation="-15"/>
+    <headlight ambient="0.35 0.35 0.38" diffuse="0.55 0.55 0.55" specular="0.1 0.1 0.1"/>
+    <quality shadowsize="4096"/>
+    <map znear="0.02"/>
+  </visual>
+  <asset>
+    <texture name="sky" type="skybox" builtin="gradient" rgb1="0.55 0.68 0.82" rgb2="0.12 0.14 0.2" width="256" height="1536"/>
+    <texture name="grid" type="2d" builtin="checker" rgb1="0.30 0.31 0.33" rgb2="0.24 0.25 0.27" width="512" height="512" mark="edge" markrgb="0.4 0.4 0.42"/>
+    <material name="floor" texture="grid" texrepeat="40 40" reflectance="0.05"/>
+    <material name="rubber" rgba="0.06 0.06 0.065 1" specular="0.15" shininess="0.2"/>
+    <material name="tread" rgba="0.11 0.11 0.12 1" specular="0.05"/>
+    <material name="alu" rgba="0.62 0.64 0.67 1" specular="0.8" shininess="0.8" reflectance="0.15"/>
+    <material name="rail" rgba="0.13 0.14 0.16 1" specular="0.7" shininess="0.7"/>
+    <material name="grip" rgba="0.05 0.05 0.055 1" specular="0.0"/>
+    <material name="box" rgba="0.10 0.10 0.11 1" specular="0.3"/>
+    <material name="bumper" rgba="0.85 0.33 0.10 1" specular="0.3"/>
+    <material name="fender" rgba="0.09 0.09 0.10 1" specular="0.4"/>
+    <material name="white_led" rgba="1 1 1 1" emission="1"/>
+    <material name="red_led" rgba="1 0.08 0.05 1" emission="1"/>
+    <material name="status_led" rgba="0.2 0.9 1 1" emission="1"/>
+    <material name="rider" rgba="0.75 0.45 0.25 0.45"/>
+  </asset>
+
+  <default>
+    <geom contype="0" conaffinity="0" density="600"/>
+    <default class="hit"><geom contype="1" conaffinity="1" friction="1.0 0.01 0.004"/></default>
+    <default class="vis"><geom contype="0" conaffinity="0" density="0" mass="0"/></default>
+  </default>
+
+  <worldbody>
+    <geom name="floor" type="plane" size="60 60 0.05" material="floor" contype="1" conaffinity="1"/>
+    <light name="sun" pos="2 -3 5" dir="-0.3 0.5 -1" diffuse="0.8 0.8 0.78" castshadow="true"/>
+
+    <!-- deck origin = axle. Tyre radius 0.146 (11.5 in), so the axle rides 0.146 above the ground. -->
+    <body name="deck" pos="0 0 0.146">
+      <freejoint name="root"/>
+
+      <!-- rails: one each side of the tyre, running nose to tail at axle height -->
+      <geom name="rail_L" type="box" size="0.345 0.007 0.024" pos="0  0.108 0.004" material="rail" class="hit" mass="1.1"/>
+      <geom name="rail_R" type="box" size="0.345 0.007 0.024" pos="0 -0.108 0.004" material="rail" class="hit" mass="1.1"/>
+      <!-- axle blocks where the hub bolts to the rails -->
+      <geom type="box" size="0.035 0.010 0.030" pos="0  0.106 0" material="alu" class="vis"/>
+      <geom type="box" size="0.035 0.010 0.030" pos="0 -0.106 0" material="alu" class="vis"/>
+      <geom type="cylinder" size="0.012 0.004" pos="0  0.119 0" euler="90 0 0" material="rail" class="vis"/>
+      <geom type="cylinder" size="0.012 0.004" pos="0 -0.119 0" euler="90 0 0" material="rail" class="vis"/>
+
+      <!-- front footpad (sensor pad), slightly concave/kicked: two slabs -->
+      <geom name="pad_F"  type="box" size="0.098 0.118 0.009" pos=" 0.262 0 0.037" material="grip" class="hit" mass="0.7"/>
+      <geom type="box" size="0.022 0.118 0.009" pos=" 0.372 0 0.043" euler="0 -14 0" material="grip" class="vis"/>
+      <!-- rear footpad with a kicktail -->
+      <geom name="pad_R"  type="box" size="0.098 0.118 0.009" pos="-0.262 0 0.037" material="grip" class="hit" mass="0.7"/>
+      <geom type="box" size="0.026 0.118 0.009" pos="-0.374 0 0.047" euler="0 20 0" material="grip" class="vis"/>
+      <!-- sensor split line on the front pad -->
+      <geom type="box" size="0.090 0.002 0.0095" pos="0.262 0 0.0372" material="rail" class="vis"/>
+
+      <!-- controller box (front) and battery box (rear), slung under the pads between the rails -->
+      <geom name="ctrl_box" type="box" size="0.092 0.098 0.024" pos=" 0.262 0 0.002" material="box" class="hit" mass="1.6"/>
+      <geom name="batt_box" type="box" size="0.092 0.098 0.027" pos="-0.262 0 -0.001" material="box" class="hit" mass="4.6"/>
+
+      <!-- bumpers, with head/tail light bars -->
+      <geom name="bump_F" type="box" size="0.018 0.112 0.020" pos=" 0.366 0 0.006" euler="0 -18 0" material="bumper" class="hit" mass="0.15"/>
+      <geom name="bump_R" type="box" size="0.018 0.112 0.020" pos="-0.366 0 0.006" euler="0 18 0" material="bumper" class="hit" mass="0.15"/>
+      <geom type="box" size="0.003 0.085 0.006" pos=" 0.386 0 0.010" euler="0 -18 0" material="white_led" class="vis"/>
+      <geom type="box" size="0.003 0.085 0.006" pos="-0.386 0 0.010" euler="0 18 0" material="red_led" class="vis"/>
+      <!-- LCM status bar on the front pad edge -->
+      <geom type="box" size="0.003 0.045 0.003" pos="0.166 0 0.047" material="status_led" class="vis"/>
+
+      <!-- fender arcing over the tyre between the pads -->
+      <geom type="box" size="0.050 0.090 0.003" pos=" 0.118 0 0.118" euler="0 47 0" material="fender" class="vis"/>
+      <geom type="box" size="0.050 0.090 0.003" pos=" 0.045 0 0.158" euler="0 16 0" material="fender" class="vis"/>
+      <geom type="box" size="0.050 0.090 0.003" pos="-0.045 0 0.158" euler="0 -16 0" material="fender" class="vis"/>
+      <geom type="box" size="0.050 0.090 0.003" pos="-0.118 0 0.118" euler="0 -47 0" material="fender" class="vis"/>
+
+      <!-- rider: sideways stance, one foot per pad. The mass lives in the torso geom; the rest is drawn. -->
+      <geom name="rider_mass" type="capsule" fromto="0 0 0.95  0 0 1.38" size="0.13" material="rider" mass="78"/>
+      <geom type="capsule" fromto=" 0.262 0 0.075   0.10 0 0.90" size="0.060" material="rider" class="vis"/>
+      <geom type="capsule" fromto="-0.262 0 0.075  -0.10 0 0.90" size="0.060" material="rider" class="vis"/>
+      <geom type="box" size="0.050 0.125 0.022" pos=" 0.262 0.01 0.068" material="rider" class="vis"/>
+      <geom type="box" size="0.050 0.125 0.022" pos="-0.262 0.01 0.068" material="rider" class="vis"/>
+      <geom type="sphere" size="0.105" pos="0 0 1.62" material="rider" class="vis"/>
+      <geom type="capsule" fromto=" 0.16 0 1.36   0.30 0 1.00" size="0.042" material="rider" class="vis"/>
+      <geom type="capsule" fromto="-0.16 0 1.36  -0.30 0 1.00" size="0.042" material="rider" class="vis"/>
+
+      <site name="imu" type="box" size="0.02 0.03 0.006" pos="0.262 0 0.02" rgba="0 1 0 0"/>
+
+      <body name="wheel" pos="0 0 0">
+        <joint name="wheel" type="hinge" axis="0 1 0" damping="0.02" armature="0.012"/>
+        <!-- 11.5 x 6.5 tyre: flat tread band plus a rounded carcass for the shoulders -->
+        <geom name="tyre" type="cylinder" size="0.146 0.058" euler="90 0 0" material="tread" class="hit" mass="2.2"/>
+        <geom type="ellipsoid" size="0.143 0.0825 0.143" material="rubber" class="vis"/>
+        <!-- hub motor shell and side covers -->
+        <geom type="cylinder" size="0.084 0.086" euler="90 0 0" material="alu" class="vis"/>
+        <geom name="hub_mass" type="cylinder" size="0.060 0.050" euler="90 0 0" material="alu" mass="3.6"/>
+        <!-- cover bolts/spokes so wheel rotation is visible -->
+        <geom type="box" size="0.070 0.0875 0.007" material="rail" class="vis"/>
+        <geom type="box" size="0.070 0.0875 0.007" euler="0 60 0" material="rail" class="vis"/>
+        <geom type="box" size="0.070 0.0875 0.007" euler="0 120 0" material="rail" class="vis"/>
+        <!-- tread blocks, also for rotation -->
+        <geom type="box" size="0.1475 0.050 0.006" material="rubber" class="vis"/>
+        <geom type="box" size="0.1475 0.050 0.006" euler="0 45 0" material="rubber" class="vis"/>
+        <geom type="box" size="0.1475 0.050 0.006" euler="0 90 0" material="rubber" class="vis"/>
+        <geom type="box" size="0.1475 0.050 0.006" euler="0 135 0" material="rubber" class="vis"/>
+      </body>
+    </body>
+  </worldbody>
+
+  <actuator>
+    <motor name="throttle" joint="wheel" gear="28" ctrlrange="-1 1"/>
+  </actuator>
+</mujoco>

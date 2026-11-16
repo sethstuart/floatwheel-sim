@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+*.npz
+out/
+runs/
+.venv/
+venv/
+.DS_Store
+.idea/
+MUJOCO_LOG.TXT
